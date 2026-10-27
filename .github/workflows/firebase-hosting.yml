@@ -1,0 +1,42 @@
+name: Publicación controlada Firebase Hosting
+on:
+  workflow_dispatch:
+    inputs:
+      destino:
+        description: Vista de prueba o producción
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - live
+      aprobacion:
+        description: Para producción escribir PUBLICAR tras aprobación de Luis
+        required: false
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: firebase-hosting-${{ inputs.destino }}
+  cancel-in-progress: false
+jobs:
+  hosting:
+    if: inputs.destino == 'preview' || inputs.aprobacion == 'PUBLICAR'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar JavaScript
+        run: |
+          node --check public/app.mjs
+          node --check public/calc.mjs
+          node --check public/firebase-config.js
+      - name: Publicar destino seleccionado
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CRMLGATTNEGOCIOS }}
+          projectId: crmlgattnegocios
+          channelId: ${{ inputs.destino == 'live' && 'live' || 'crm-revision' }}
+          expires: 7d
