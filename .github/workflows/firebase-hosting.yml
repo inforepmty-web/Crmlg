@@ -1,5 +1,8 @@
 name: Publicación controlada Firebase Hosting
 on:
+  push:
+    branches: [main]
+    paths: ["public/**", "firebase.json", ".github/workflows/firebase-hosting.yml"]
   workflow_dispatch:
     inputs:
       destino:
@@ -17,11 +20,11 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: firebase-hosting-${{ inputs.destino }}
+  group: firebase-hosting-${{ inputs.destino || 'preview' }}
   cancel-in-progress: false
 jobs:
   hosting:
-    if: inputs.destino == 'preview' || inputs.aprobacion == 'PUBLICAR'
+    if: github.event_name == 'push' || inputs.destino == 'preview' || inputs.aprobacion == 'PUBLICAR'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
